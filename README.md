@@ -5,8 +5,7 @@
 ```shell
 $ nohup python main.py &
 ```
-- 终止
+- 终止(更加优雅)
 ```shell
-$ ps aux
-$ kill -9 PID
+kill $(ps aux | grep '[python.py' | awk '{print $2}')
 ```
