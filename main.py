@@ -1,5 +1,6 @@
 
-from flask import Flask, request
+from flask import Flask
+from flask_cors import CORS
 
 from mysql.model import *
 from mysql.api.bytime import bytime
@@ -11,6 +12,7 @@ from mysql.api.bygenre import bygenre
 from mysql.api.byreview import byreview
 
 app = Flask(__name__)
+CORS(app, resources=r'/*')	# 注册CORS, "/*" 允许访问所有api
 
 app.register_blueprint(bytime, url_prefix='/api/bytime')
 app.register_blueprint(bytitle, url_prefix='/api/bytitle')
