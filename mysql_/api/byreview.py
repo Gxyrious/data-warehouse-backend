@@ -1,4 +1,4 @@
-from flask import request, Blueprint
+from flask import request, Blueprint, jsonify
 from sqlalchemy import func
 from mysql_.model import *
 
@@ -15,4 +15,4 @@ def getMovieTitleByReviewScore():
         .having(func.avg(Review.review_score) >= score) \
         .paginate(page=page, per_page=size).items
     
-    return str(titles)
+    return jsonify(titles)
