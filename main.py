@@ -2,29 +2,41 @@
 from flask import Flask
 from flask_cors import CORS
 
-from mysql.model import *
-from mysql.api.bytime import bytime
-from mysql.api.bytitle import bytitle
-from mysql.api.bydirector import bydirector
-from mysql.api.byactor import byactor
-from mysql.api.cooperation import cooperation
-from mysql.api.bygenre import bygenre
-from mysql.api.byreview import byreview
+# 引入mysql
+from mysql_.model import *
+from mysql_.api.bytime import bytime as mysql_bytime
+from mysql_.api.bytitle import bytitle as mysql_bytitle
+from mysql_.api.bydirector import bydirector as mysql_bydirector
+from mysql_.api.byactor import byactor as mysql_byactor
+from mysql_.api.cooperation import cooperation as mysql_cooperation
+from mysql_.api.bygenre import bygenre as mysql_bygenre
+from mysql_.api.byreview import byreview as mysql_byreview
+from mysql_.api.comprehensive import comprehensive as mysql_comprehensive
+
+# 引入neo4j
+from neo4j_.api.bytime import bytime as neo4j_bytime
+from neo4j_.api.bytitle import bytitle as neo4j_bytitle
 
 app = Flask(__name__)
 CORS(app, resources=r'/*')	# 注册CORS, "/*" 允许访问所有api
 
-app.register_blueprint(bytime, url_prefix='/api/bytime')
-app.register_blueprint(bytitle, url_prefix='/api/bytitle')
-app.register_blueprint(bydirector, url_prefix='/api/bydirector')
-app.register_blueprint(byactor, url_prefix='/api/byactor')
-app.register_blueprint(cooperation, url_prefix='/api/cooperation')
-app.register_blueprint(bygenre, url_prefix='/api/bygenre')
-app.register_blueprint(byreview, url_prefix='/api/byreview')
+# 注册mysql相关api
+app.register_blueprint(mysql_bytime, url_prefix='/mysql/bytime')
+app.register_blueprint(mysql_bytitle, url_prefix='/mysql/bytitle')
+app.register_blueprint(mysql_bydirector, url_prefix='/mysql/bydirector')
+app.register_blueprint(mysql_byactor, url_prefix='/mysql/byactor')
+app.register_blueprint(mysql_cooperation, url_prefix='/mysql/cooperation')
+app.register_blueprint(mysql_bygenre, url_prefix='/mysql/bygenre')
+app.register_blueprint(mysql_byreview, url_prefix='/mysql/byreview')
+app.register_blueprint(mysql_comprehensive, url_prefix='/mysql/comprehensive')
+
+# 注册neo4j相关api
+app.register_blueprint(neo4j_bytime, url_prefix='/neo4j/bytime')
+app.register_blueprint(neo4j_bytitle, url_prefix='/neo4j/bytitle')
 
 class Config():
 
-    SQLALCHEMY_DATABASE_URI = "mysql://root:FBCFBCFBC@43.142.164.87:3306/dw_movie"
+    SQLALCHEMY_DATABASE_URI = "mysql://liuchang:tjdxDW2022@81.68.102.171:3306/dw" # 后续ip地址改为localhost
     # SQLALCHEMY_TRACK_MODIFICATIONS = False
     # SQLALCHEMY_ECHO = True
 
@@ -41,5 +53,4 @@ if __name__ == '__main__':
 ### 后台运行
 # nohup python main.py &
 ### 寻找pid杀死
-# ps aux
-# kill -9 PID
+# ps -aux|grep -v grep |grep main.py |awk '{print $2}'| xargs kill -9

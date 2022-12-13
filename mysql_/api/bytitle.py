@@ -1,8 +1,8 @@
-from flask import request, Blueprint
+from flask import request, Blueprint, jsonify
 from sqlalchemy import distinct
-from mysql.model import *
+from mysql_.model import *
 
-bytitle = Blueprint("bytitle", __name__)
+bytitle = Blueprint("mysql_bytitle", __name__)
 
 @bytitle.route('/format', methods=['GET'])
 def getFormatNumByTitle():
@@ -12,4 +12,4 @@ def getFormatNumByTitle():
         .filter(Format.movie_title.like("%{}%".format(title))) \
         .count()
     
-    return str({"format_num": format_num})
+    return jsonify({"format_num": format_num})

@@ -1,7 +1,7 @@
-from flask import request, Blueprint
-from mysql.model import *
+from flask import request, Blueprint, jsonify
+from mysql_.model import *
 
-bygenre = Blueprint("bygenre", __name__)
+bygenre = Blueprint("mysql_bygenre", __name__)
 
 @bygenre.route('/movie', methods=['GET'])
 def getMovieNumByGenre():
@@ -11,4 +11,4 @@ def getMovieNumByGenre():
         .filter(Genre.genre_name.like("%{}%".format(genre))) \
         .count()
 
-    return str({"movie_num": movie_num})
+    return jsonify({"movie_num": movie_num})

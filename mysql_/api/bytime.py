@@ -1,7 +1,7 @@
-from flask import request, Blueprint
-from mysql.model import *
+from flask import request, Blueprint, jsonify
+from mysql_.model import *
 
-bytime = Blueprint("bytime", __name__)
+bytime = Blueprint("mysql_bytime", __name__)
 
 @bytime.route('/year', methods=['GET'])
 def getNumByYear():
@@ -10,8 +10,7 @@ def getNumByYear():
     movie_num = db.session.query(ReleaseDate.movie_id) \
         .filter(ReleaseDate.year == year) \
         .count()
-
-    return str({"movie_num": movie_num})
+    return jsonify({"movie_num": movie_num})
 
 
 @bytime.route('/year-month', methods=['GET'])
@@ -21,7 +20,7 @@ def getMovieNumByYearAndMonth():
     movie_num = db.session.query(ReleaseDate.movie_id) \
         .filter(ReleaseDate.year == year, ReleaseDate.month == month) \
         .count()
-    return str({"movie_num": movie_num})
+    return jsonify({"movie_num": movie_num})
 
 @bytime.route('/year-season', methods=['GET'])
 def getMovieNumByYearAndSeason():
@@ -30,7 +29,7 @@ def getMovieNumByYearAndSeason():
     movie_num = db.session.query(ReleaseDate.movie_id) \
         .filter(ReleaseDate.year == year, ReleaseDate.season == season) \
         .count()
-    return str({"movie_num": movie_num})
+    return jsonify({"movie_num": movie_num})
 
 @bytime.route('/weekday', methods=['GET'])
 def getNumByWeek():
@@ -39,4 +38,4 @@ def getNumByWeek():
     movie_num = db.session.query(ReleaseDate.weekday) \
         .filter(ReleaseDate.weekday == weekday) \
         .count()
-    return str({"movie_num": movie_num})
+    return jsonify({"movie_num": movie_num})

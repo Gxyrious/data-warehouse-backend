@@ -1,8 +1,8 @@
 from flask import request, Blueprint
 from sqlalchemy import func
-from mysql.model import *
+from mysql_.model import *
 
-byreview = Blueprint("byreview", __name__)
+byreview = Blueprint("mysql_byreview", __name__)
 
 @byreview.route('/score', methods=['GET'])
 def getMovieTitleByReviewScore():

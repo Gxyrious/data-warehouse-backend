@@ -1,9 +1,9 @@
-from flask import request, Blueprint
+from flask import request, Blueprint, jsonify
 from sqlalchemy import func, or_, orm
-from mysql.model import *
+from mysql_.model import *
 from collections import Counter
 
-cooperation = Blueprint("cooperation", __name__)
+cooperation = Blueprint("mysql_cooperation", __name__)
 
 @cooperation.route('/with_actor/director', methods=['GET'])
 def getActorCooperateWithDirector():
@@ -34,7 +34,7 @@ def getActorCooperateWithDirector():
         ) \
         .having(func.count(director_cooperate_actor.c.movie_id) >= time) \
         .all()
-    return str(list(map(lambda x: x[0], actors)))
+    return jsonify(list(map(lambda x: x[0], actors)))
 
 
 @cooperation.route('/with_actor/actor', methods=['GET'])
@@ -82,7 +82,7 @@ def getActorCooperateWithActor():
     # get_actor_name = list(map(lambda x: x[0], time_filted)) # 获取姓名
     # return str(get_actor_name)
 
-    return str(list(map(lambda x: x[0], filter(lambda x: x[1] >= time, dict(Counter(map(lambda x: x[0], final_query.all()))).items()))))
+    return jsonify(list(map(lambda x: x[0], filter(lambda x: x[1] >= time, dict(Counter(map(lambda x: x[0], final_query.all()))).items()))))
 
 
 @cooperation.route('/with_director/actor', methods=['GET'])
@@ -105,7 +105,6 @@ def getDirectorCooperateWithActor():
             Actor.actor_id == Cooperation.right_person_id
         ) \
         .subquery()
-    print(type(director_cooperate_actor))
     directors = db.session.query(director_cooperate_actor.c.director_name) \
         .filter(director_cooperate_actor.c.actor_name.like("%{}%".format(actor))) \
         .group_by(
@@ -115,4 +114,4 @@ def getDirectorCooperateWithActor():
         .having(func.count(director_cooperate_actor.c.movie_id) >= time) \
         .all()
 
-    return str(list(map(lambda x: x[0], directors)))
+    return jsonify(list(map(lambda x: x[0], directors)))
