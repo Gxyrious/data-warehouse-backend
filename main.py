@@ -1,5 +1,5 @@
 
-from flask import Flask
+from flask import Flask, request, jsonify
 from flask_cors import CORS
 
 # 引入mysql
@@ -43,6 +43,18 @@ class Config():
 app.config.from_object(Config)
 
 db.init_app(app)
+
+@app.route('/test/post', methods=['POST'])
+def testpost():
+    data = request.get_json()
+    print(data)
+    return jsonify(data)
+
+@app.route('/test/get', methods=['GET'])
+def testget():
+    data = request.args
+    print(data)
+    return jsonify(data)
 
 if __name__ == '__main__':
     with app.app_context():
