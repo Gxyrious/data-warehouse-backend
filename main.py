@@ -1,5 +1,5 @@
 
-from flask import Flask
+from flask import Flask, request, jsonify
 from flask_cors import CORS
 
 # 引入mysql
@@ -12,10 +12,15 @@ from mysql_.api.cooperation import cooperation as mysql_cooperation
 from mysql_.api.bygenre import bygenre as mysql_bygenre
 from mysql_.api.byreview import byreview as mysql_byreview
 from mysql_.api.comprehensive import comprehensive as mysql_comprehensive
+from mysql_.api.count import count as mysql_count
 
 # 引入neo4j
 from neo4j_.api.bytime import bytime as neo4j_bytime
 from neo4j_.api.bytitle import bytitle as neo4j_bytitle
+from neo4j_.api.comprehensive import comprehensive as neo4j_comprehensive
+
+# 搜索建议
+from mysql_.api.suggest import suggest
 
 app = Flask(__name__)
 CORS(app, resources=r'/*')	# 注册CORS, "/*" 允许访问所有api
@@ -29,10 +34,15 @@ app.register_blueprint(mysql_cooperation, url_prefix='/mysql/cooperation')
 app.register_blueprint(mysql_bygenre, url_prefix='/mysql/bygenre')
 app.register_blueprint(mysql_byreview, url_prefix='/mysql/byreview')
 app.register_blueprint(mysql_comprehensive, url_prefix='/mysql/comprehensive')
+app.register_blueprint(mysql_count, url_prefix='/mysql/count')
 
 # 注册neo4j相关api
 app.register_blueprint(neo4j_bytime, url_prefix='/neo4j/bytime')
 app.register_blueprint(neo4j_bytitle, url_prefix='/neo4j/bytitle')
+app.register_blueprint(neo4j_comprehensive, url_prefix='/neo4j/comprehensive')
+
+# 注册搜索建议相关api
+app.register_blueprint(suggest, url_prefix='/mysql/suggest')
 
 class Config():
 
@@ -43,6 +53,18 @@ class Config():
 app.config.from_object(Config)
 
 db.init_app(app)
+
+@app.route('/test/post', methods=['POST'])
+def testpost():
+    data = request.get_json()
+    print(data)
+    return jsonify(data)
+
+@app.route('/test/get', methods=['GET'])
+def testget():
+    data = request.args
+    print(data)
+    return jsonify(data)
 
 if __name__ == '__main__':
     with app.app_context():

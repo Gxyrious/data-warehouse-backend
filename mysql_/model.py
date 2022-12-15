@@ -1,9 +1,9 @@
 # coding: utf-8
 from flask_sqlalchemy import SQLAlchemy
 
-# flask-sqlacodegen --flask 'mysql+pymysql://liuchang:LiUChAnG200203/n@81.68.102.171/dw' --outfile "movie.py"
-db = SQLAlchemy()
 
+db = SQLAlchemy()
+# flask-sqlacodegen --flask 'mysql+pymysql://liuchang:tjdxDW2022@81.68.102.171/dw' --outfile "model.py"
 
 
 class Act(db.Model):
@@ -36,13 +36,13 @@ class Asin(db.Model):
 
 
 
-class Cooperation(db.Model):
-    __tablename__ = 'Cooperation'
-
-    left_person_id = db.Column(db.Integer, primary_key=True, nullable=False)
-    right_person_id = db.Column(db.Integer, primary_key=True, nullable=False)
-    movie_id = db.Column(db.Integer, primary_key=True, nullable=False)
-    type = db.Column(db.Integer, primary_key=True, nullable=False)
+t_Cooperation = db.Table(
+    'Cooperation',
+    db.Column('left_person_id', db.Integer, nullable=False),
+    db.Column('right_person_id', db.Integer, nullable=False),
+    db.Column('movie_id', db.Integer, nullable=False),
+    db.Column('type', db.Integer)
+)
 
 
 
@@ -130,3 +130,44 @@ class Review(db.Model):
     asin = db.Column(db.String(10))
 
     movie = db.relationship('Movie', primaryjoin='Review.movie_id == Movie.movie_id', backref='reviews')
+
+
+
+t_movie_actor = db.Table(
+    'movie_actor',
+    db.Column('movie_id', db.Integer),
+    db.Column('name', db.String(256))
+)
+
+
+
+t_movie_date_genre = db.Table(
+    'movie_date_genre',
+    db.Column('title', db.String(256)),
+    db.Column('movie_id', db.Integer),
+    db.Column('score', db.Float),
+    db.Column('edition', db.Integer),
+    db.Column('year', db.Integer),
+    db.Column('month', db.Integer),
+    db.Column('day', db.Integer),
+    db.Column('season', db.Integer),
+    db.Column('weekday', db.Integer),
+    db.Column('date', db.DateTime),
+    db.Column('genre_name', db.String(64))
+)
+
+
+
+t_movie_director = db.Table(
+    'movie_director',
+    db.Column('movie_id', db.Integer),
+    db.Column('name', db.String(256))
+)
+
+
+
+t_movie_format = db.Table(
+    'movie_format',
+    db.Column('movie_id', db.Integer),
+    db.Column('format_name', db.String(256))
+)

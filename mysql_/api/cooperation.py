@@ -12,17 +12,17 @@ def getActorCooperateWithDirector():
     # 查找与director合作次数超过time的actor
     director_cooperate_actor = db.session.query(
             Director.name.label("director_name"), 
-            Cooperation.left_person_id.label("director_id"), 
+            t_Cooperation.c.left_person_id.label("director_id"), 
             # Director.director_id.label("director_id"),
             Actor.name.label("actor_name"), 
-            Cooperation.right_person_id.label("actor_id"), 
+            t_Cooperation.c.right_person_id.label("actor_id"), 
             # Actor.actor_id.label("actor_id"), 
-            Cooperation.movie_id.label("movie_id")
+            t_Cooperation.c.movie_id.label("movie_id")
         ) \
         .filter(
-            Cooperation.type == 1, 
-            Director.director_id == Cooperation.left_person_id, 
-            Actor.actor_id == Cooperation.right_person_id
+            t_Cooperation.c.type == 1, 
+            Director.director_id == t_Cooperation.c.left_person_id, 
+            Actor.actor_id == t_Cooperation.c.right_person_id
         ) \
         .subquery()
     # 子查询，subquery.c表示从自定的Column列中找
@@ -48,17 +48,17 @@ def getActorCooperateWithActor():
 
     actor_cooperate_actor = db.session.query(
             left_actors.name.label("left_actor_name"),
-            Cooperation.left_person_id.label("left_actor_id"),
+            t_Cooperation.c.left_person_id.label("left_actor_id"),
             # left_actors.actor_id.label("left_actor_id"),
             right_actors.name.label("right_actor_name"),
-            Cooperation.right_person_id.label("right_actor_id"),
+            t_Cooperation.c.right_person_id.label("right_actor_id"),
             # right_actors.actor_id.label("right_actor_id"),
-            Cooperation.movie_id.label("movie_id")
+            t_Cooperation.c.movie_id.label("movie_id")
         ) \
         .filter(
-            Cooperation.type == 2,
-            left_actors.actor_id == Cooperation.left_person_id,
-            right_actors.actor_id == Cooperation.right_person_id
+            t_Cooperation.c.type == 2,
+            left_actors.actor_id == t_Cooperation.c.left_person_id,
+            right_actors.actor_id == t_Cooperation.c.right_person_id
         ) \
         .subquery()
 
@@ -92,17 +92,17 @@ def getDirectorCooperateWithActor():
     # 查找与actor合作次数超过time的director
     director_cooperate_actor = db.session.query(
             Director.name.label("director_name"),
-            Cooperation.left_person_id.label("director_id"),
+            t_Cooperation.c.left_person_id.label("director_id"),
             # Director.director_id.label("director_id"),
             Actor.name.label("actor_name"), 
-            Cooperation.right_person_id.label("actor_id"),
+            t_Cooperation.c.right_person_id.label("actor_id"),
             # Actor.actor_id.label("actor_id"),
-            Cooperation.movie_id.label("movie_id"),
+            t_Cooperation.c.movie_id.label("movie_id"),
         ) \
         .filter(
-            Cooperation.type == 1,
-            Director.director_id == Cooperation.left_person_id,
-            Actor.actor_id == Cooperation.right_person_id
+            t_Cooperation.c.type == 1,
+            Director.director_id == t_Cooperation.c.left_person_id,
+            Actor.actor_id == t_Cooperation.c.right_person_id
         ) \
         .subquery()
     directors = db.session.query(director_cooperate_actor.c.director_name) \
