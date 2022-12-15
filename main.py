@@ -16,6 +16,7 @@ from mysql_.api.comprehensive import comprehensive as mysql_comprehensive
 # 引入neo4j
 from neo4j_.api.bytime import bytime as neo4j_bytime
 from neo4j_.api.bytitle import bytitle as neo4j_bytitle
+from neo4j_.api.comprehensive import comprehensive as neo4j_comprehensive
 
 # 搜索建议
 from mysql_.api.suggest import suggest
@@ -36,6 +37,7 @@ app.register_blueprint(mysql_comprehensive, url_prefix='/mysql/comprehensive')
 # 注册neo4j相关api
 app.register_blueprint(neo4j_bytime, url_prefix='/neo4j/bytime')
 app.register_blueprint(neo4j_bytitle, url_prefix='/neo4j/bytitle')
+app.register_blueprint(neo4j_comprehensive, url_prefix='/neo4j/comprehensive')
 
 # 注册搜索建议相关api
 app.register_blueprint(suggest, url_prefix='/mysql/suggest')
