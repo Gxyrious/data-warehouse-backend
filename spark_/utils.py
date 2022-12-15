@@ -10,7 +10,6 @@ def get_spark_session():
                      .enableHiveSupport()
                      .getOrCreate()
                      )
-
     spark_session.sql('use dw_movie')
     spark_session.sql('show tables').show()
     return spark_session
