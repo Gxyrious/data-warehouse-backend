@@ -32,6 +32,13 @@ def spark_comprehensive_movie():
     t_movie_director = session.sql('select * from movie_director')
     t_movie_asin = session.sql('select * from asin')
 
+    # t_all=t_movie_date_genre.join(
+    #     t_movie_format,['movie_id'],'fullouter').join(
+    #     t_movie_actor,['movie_id'],'fullouter').join(
+    #     t_movie_director,['movie_id'],'fullouter').join(
+    #     t_movie_asin,['movie_id'],'fullouter'
+    #     )
+
     simple_columns = list(
         {"score", "edition", "date", "genre_name", "title"}.intersection(set(columns)))
     simple_columns.append("movie_id")
@@ -104,18 +111,17 @@ def spark_comprehensive_movie():
 
     start_time = time.time()
     result_of_simple_columns = t_movie_date_genre
-    result_of_simple_columns.join()
+    
     for f in filters:
         print(f)
         result_of_simple_columns = result_of_simple_columns.filter(f)
         result_of_simple_columns.show()
+        
     result_of_simple_columns = result_of_simple_columns.select(simple_columns)
     consuming_time += time.time() - start_time
-    
-    filter_movie_id_list = list(filter_movie_id_list)
 
-    if filter_movie_id_list != []:
-        result_of_simple_columns = result_of_simple_columns.filter(result_of_simple_columns['movie_id'].isin(filter_movie_id_list))
+    # if len(filter_movie_id_list) != 0:
+    #     result_of_simple_columns = result_of_simple_columns.filter(result_of_simple_columns['movie_id'].isin(filter_movie_id_list))
 
     result = []
 
@@ -124,7 +130,13 @@ def spark_comprehensive_movie():
     if end > count:
         end = count
 
-    for i, row in result_of_simple_columns.toPandas().iloc[(page-1)*per_page:end, :].iterrows():
+    r = result_of_simple_columns.toPandas()
+    if len(filter_movie_id_list) != 0:
+        r = r[r['movie_id'].isin(filter_movie_id_list)]
+
+    print(r)
+
+    for i, row in r.iloc[(page-1)*per_page:end, :].iterrows():
         single_result = {}
         for index in range(len(simple_columns)):
             if simple_columns[index] == "movie_id":
@@ -141,7 +153,7 @@ def spark_comprehensive_movie():
             start_time = time.time()
             actors = t_movie_actor \
                 .filter(t_movie_actor["movie_id"] == movie_id) \
-                .select("name").rdd.flatMap(lambda x: x).collect()
+                .select("actor_name").rdd.flatMap(lambda x: x).collect()
             consuming_time += time.time() - start_time
             print("actors = ", actors)
             single_result["actors"] = actors
@@ -149,7 +161,7 @@ def spark_comprehensive_movie():
             start_time = time.time()
             directors = t_movie_director \
                 .filter(t_movie_director["movie_id"] == movie_id) \
-                .select("name").rdd.flatMap(lambda x: x).collect()
+                .select("director_name").rdd.flatMap(lambda x: x).collect()
             consuming_time += time.time() - start_time
             print("directors = ", directors)
             single_result["directors"] = directors
