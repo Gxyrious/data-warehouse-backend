@@ -9,10 +9,13 @@ comprehensive = Blueprint("mysql_comprehensive", __name__)
 def comprehensiveMovieQuery():
     consuming_time = 0
     data: dict = request.get_json()
-    print(data)
     columns = data.pop("columns")
-    # page, per_page = data.pop("page"), data.pop("per_page")
-    
+    page, per_page = 1, 10
+    try:
+        page, per_page = int(data.pop("page")), int(data.pop("per_page"))
+    except KeyError as e:
+        print(e)
+
     # 获取简单的字段，直接查视图
     # ["score", "edition", "date", "genre_name", "title", "actors", "directors", "format", "asin", ]
     simple_columns = list({"score", "edition", "date", "genre_name", "title"}.intersection(set(columns)))
@@ -41,9 +44,9 @@ def comprehensiveMovieQuery():
         elif key in ("year", "month", "day", "season", "weekday"):
             filters.append(t_movie_date_genre.c[key] == value)
         else:
-            print(key, value)
+            raise KeyError("筛选条件字段错误，只能包含genre_name, title, format, actor, director, min_score, max_score, year, month, day, season, weekday以及目标字典columns列表")
     start_time = time.time()
-    result_of_simple_columns = db.session.query(*queries).filter(*filters).all()
+    result_of_simple_columns = db.session.query(*queries).filter(*filters).paginate(page=page, per_page=per_page).items
     consuming_time += time.time() - start_time
     result = []
     for row in result_of_simple_columns:
@@ -104,13 +107,17 @@ def comprehensiveRelationQuery():
     data: dict = request.get_json()
     name, times = data["name"], int(data["times"])
     source, target = data["source"], data["target"]
-
+    page, per_page = 1, 10
+    try:
+        page, per_page = int(data.pop("page")), int(data.pop("per_page"))
+    except KeyError as e:
+        print(e)
     if source == "director" and target == "actor":
-        consuming_time, result = __getActorCooperateWithDirector(name, times)
+        consuming_time, result = __getActorCooperateWithDirector(name, times, page, per_page)
     elif source == "actor" and target == "actor":
-        consuming_time, result = __getActorCooperateWithActor(name, times)
+        consuming_time, result = __getActorCooperateWithActor(name, times, page, per_page)
     elif source == "actor" and target == "director":
-        consuming_time, result = __getDirectorCooperateWithActor(name, times)
+        consuming_time, result = __getDirectorCooperateWithActor(name, times, page, per_page)
     else:
         print(source, target)
     
@@ -120,7 +127,7 @@ def comprehensiveRelationQuery():
         "data": result
     })
 
-def __getActorCooperateWithDirector(director, times):
+def __getActorCooperateWithDirector(director, times, page, per_page):
 
     # 查找与director合作次数超过time的actor
     director_cooperate_actor = db.session.query(
@@ -155,12 +162,12 @@ def __getActorCooperateWithDirector(director, times):
         .having(sqlalchemy.func.count(director_cooperate_actor.c.movie_id) >= times)
     
     start_time = time.time()
-    actors = actors_query.all()
+    actors = actors_query.paginate(page=page, per_page=per_page).items
     consuming_time = time.time() - start_time
 
     return consuming_time, list(map(lambda x: {"name": x[0], "movies": x[1].split(','), "times": x[2]}, actors))
 
-def __getActorCooperateWithActor(actor, times):
+def __getActorCooperateWithActor(actor, times, page, per_page):
 
     # 查找与actor合作次数超过time的actor
     left_actors: Actor = sqlalchemy.orm.aliased(Actor)
@@ -201,7 +208,7 @@ def __getActorCooperateWithActor(actor, times):
     final_query = left_query.union_all(right_query)
 
     start_time = time.time()
-    actors_all = final_query.all()
+    actors_all = final_query.paginate(page=page, per_page=per_page).items
     consuming_time = time.time() - start_time
 
     # actors_all = final_query.all() # 查询
@@ -222,18 +229,10 @@ def __getActorCooperateWithActor(actor, times):
                 "times": len(value)
             })
     return consuming_time, result
-    
-    print(delete_bracket)
-    count_occurrence_time = dict(Counter(delete_bracket[0])) # 计算出现次数，转换为字典
-    print("count_occurrence_time")
-    print(count_occurrence_time)
-    time_filted = filter(lambda x: x[1] >= time, count_occurrence_time.items()) # 过滤
-    get_actor_name = list(map(lambda x: x[0], time_filted)) # 获取姓名
-    return str(get_actor_name)
 
     # return consuming_time, list(map(lambda x: [x[0], x[1]], filter(lambda x: x[1] >= times, dict(Counter(map(lambda x: [x[0], x[1]], actors_all))).items())))
 
-def __getDirectorCooperateWithActor(actor, times):
+def __getDirectorCooperateWithActor(actor, times, page, per_page):
 
     # 查找与actor合作次数超过time的director
     director_cooperate_actor = db.session.query(
@@ -269,7 +268,7 @@ def __getDirectorCooperateWithActor(actor, times):
         .having(sqlalchemy.func.count(director_cooperate_actor.c.movie_id) >= times)
 
     start_time = time.time()
-    directors = directors_query.all()
+    directors = directors_query.paginate(page=page, per_page=per_page).items
     consuming_time = time.time() - start_time
 
     return consuming_time, list(map(lambda x: {"name": x[0], "movies": x[1].split(','), "times": x[2]}, directors))
