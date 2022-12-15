@@ -210,19 +210,19 @@ def spark_relation():
     except KeyError as e:
         print(e)
     if source == "director" and target == "actor":
-        consuming_time, result = __getActorCooperateWithDirector(
+        consuming_time, result, count = __getActorCooperateWithDirector(
             name, times, page, per_page)
     elif source == "actor" and target == "actor":
-        consuming_time, result = __getActorCooperateWithActor(
+        consuming_time, result, count = __getActorCooperateWithActor(
             name, times, page, per_page)
     elif source == "actor" and target == "director":
-        consuming_time, result = __getDirectorCooperateWithActor(
+        consuming_time, result, count = __getDirectorCooperateWithActor(
             name, times, page, per_page)
     else:
         print(source, target)
 
     return jsonify({
-        "count": len(result),
+        "count": count,
         "consuming_time": consuming_time,
         "data": result
     })
@@ -259,7 +259,7 @@ def __getActorCooperateWithDirector(director, times, page, per_page):
     if end > len(result):
         end = len(result)
 
-    return consuming_time, result[(page-1)*per_page:end]
+    return consuming_time, result[(page-1)*per_page:end],len(result)
 
 
 def __getActorCooperateWithActor(actor, times, page, per_page):
@@ -314,7 +314,7 @@ def __getActorCooperateWithActor(actor, times, page, per_page):
     if end > len(result):
         end = len(result)
 
-    return consuming_time, result[(page-1)*per_page:end]
+    return consuming_time, result[(page-1)*per_page:end],len(result)
 
 
 def __getDirectorCooperateWithActor(actor, times, page, per_page):
@@ -348,4 +348,4 @@ def __getDirectorCooperateWithActor(actor, times, page, per_page):
     if end > len(result):
         end = len(result)
 
-    return consuming_time, result[(page-1)*per_page:end]
+    return consuming_time, result[(page-1)*per_page:end],len(result)
