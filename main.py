@@ -12,6 +12,7 @@ from mysql_.api.cooperation import cooperation as mysql_cooperation
 from mysql_.api.bygenre import bygenre as mysql_bygenre
 from mysql_.api.byreview import byreview as mysql_byreview
 from mysql_.api.comprehensive import comprehensive as mysql_comprehensive
+from mysql_.api.count import count as mysql_count
 
 # 引入neo4j
 from neo4j_.api.bytime import bytime as neo4j_bytime
@@ -32,6 +33,7 @@ app.register_blueprint(mysql_cooperation, url_prefix='/mysql/cooperation')
 app.register_blueprint(mysql_bygenre, url_prefix='/mysql/bygenre')
 app.register_blueprint(mysql_byreview, url_prefix='/mysql/byreview')
 app.register_blueprint(mysql_comprehensive, url_prefix='/mysql/comprehensive')
+app.register_blueprint(mysql_count, url_prefix='/mysql/count')
 
 # 注册neo4j相关api
 app.register_blueprint(neo4j_bytime, url_prefix='/neo4j/bytime')

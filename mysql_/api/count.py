@@ -3,25 +3,18 @@ from mysql_.model import *
 import time, sqlalchemy
 from collections import Counter
 
-comprehensive = Blueprint("mysql_comprehensive", __name__)
+count = Blueprint("mysql_comprehensive_count", __name__)
 
-@comprehensive.route('/movie', methods=['POST'])
-def comprehensiveMovieQuery():
-    consuming_time = 0
+@count.route('/movie', methods=['POST'])
+def comprehensiveMoviePages():
+    # 只需要传筛选条件和页码，不需要传columns
     data: dict = request.get_json()
-    columns = data.pop("columns")
     page, per_page = 1, 10
     try:
         page, per_page = int(data.pop("page")), int(data.pop("per_page"))
     except KeyError as e:
         print(e)
-
-    # 获取简单的字段，直接查视图
-    # ["score", "edition", "date", "genre_name", "title", "actors", "directors", "format", "asin", ]
-    simple_columns = list({"score", "edition", "date", "genre_name", "title"}.intersection(set(columns)))
-    simple_columns.append("movie_id")
-    queries = [t_movie_date_genre.c[query] for query in simple_columns]
-    # 获取查询条件
+    # 获取筛选条件
     filters = []
     for key, value in data.items():
         if key == "genre_name":
@@ -44,66 +37,13 @@ def comprehensiveMovieQuery():
         elif key in ("year", "month", "day", "season", "weekday"):
             filters.append(t_movie_date_genre.c[key] == value)
         else:
-            raise KeyError("筛选条件字段错误，只能包含genre_name, title, format, actor, director, min_score, max_score, year, month, day, season, weekday以及目标字典columns列表")
-    start_time = time.time()
-    result_of_simple_columns = db.session.query(*queries).filter(*filters).paginate(page=page, per_page=per_page).items
-    consuming_time += time.time() - start_time
-    result = []
-    for row in result_of_simple_columns:
-        single_result = {}
-        for index in range(len(queries)):
-            if simple_columns[index] == "movie_id":
-                continue
-            elif simple_columns[index] == "date":
-                datetime: sqlalchemy.DateTime = row[index]
-                single_result[simple_columns[index]] = str(datetime).split(' ')[0]
-            else:
-                single_result[simple_columns[index]] = row[index]
-        movie_id = row[-1]
-        # print("movie_id = ", movie_id)
-        if "actors" in columns:
-            start_time = time.time()
-            actors = db.session.query(t_movie_actor.c["name"]) \
-                .filter(t_movie_actor.c["movie_id"] == movie_id) \
-                .all()
-            consuming_time += time.time() - start_time
-            # print("actors = ", actors)
-            single_result["actors"] = list(map(lambda x: x[0], actors))
-        if "directors" in columns:
-            start_time = time.time()
-            directors = db.session.query(t_movie_director.c["name"]) \
-                .filter(t_movie_director.c["movie_id"] == movie_id) \
-                .all()
-            consuming_time += time.time() - start_time
-            # print("directors = ", directors)
-            single_result["directors"] = list(map(lambda x: x[0], directors))
-        if "format" in columns:
-            start_time = time.time()
-            formats = db.session.query(t_movie_format.c["format_name"]) \
-                .filter(t_movie_format.c["movie_id"] == movie_id) \
-                .all()
-            consuming_time += time.time() - start_time
-            # print("formats = ", formats)
-            single_result["formats"] = list(map(lambda x: x[0], formats))
-        if "asin" in columns:
-            start_time = time.time()
-            asins = db.session.query(Asin.asin) \
-                .filter(Asin.movie_id == movie_id) \
-                .all()
-            consuming_time += time.time() - start_time
-            single_result["asin"] = list(map(lambda x: x[0], asins))
-        result.append(single_result)
-    # print(result)
-    return jsonify({
-            "count": len(result),
-            "consuming_time": consuming_time,
-            "data": result,
-        })
+            pass
+    pages = db.session.query(t_movie_date_genre.c["movie_id"]).filter(*filters).paginate(page=page, per_page=per_page).pages
+    return jsonify({"pages": pages})
 
 
-@comprehensive.route('/relation', methods=['POST'])
-def comprehensiveRelationQuery():
-    consuming_time = 0
+@count.route('/relation', methods=['POST'])
+def comprehensiveRelationPages():
     data: dict = request.get_json()
     name, times = data["name"], int(data["times"])
     source, target = data["source"], data["target"]
@@ -113,21 +53,19 @@ def comprehensiveRelationQuery():
     except KeyError as e:
         print(e)
     if source == "director" and target == "actor":
-        consuming_time, result = __getActorCooperateWithDirector(name, times, page, per_page)
+        pages = __getPagesOfActorCooperateWithDirector(name, times, page, per_page)
     elif source == "actor" and target == "actor":
-        consuming_time, result = __getActorCooperateWithActor(name, times, page, per_page)
+        pages = __getPagesOfActorCooperateWithActor(name, times, page, per_page)
     elif source == "actor" and target == "director":
-        consuming_time, result = __getDirectorCooperateWithActor(name, times, page, per_page)
+        pages = __getPagesOfDirectorCooperateWithActor(name, times, page, per_page)
     else:
         print(source, target)
     
     return jsonify({
-        "count": len(result),
-        "consuming_time": consuming_time,
-        "data": result
+        "pages": pages
     })
 
-def __getActorCooperateWithDirector(director, times, page, per_page):
+def __getPagesOfActorCooperateWithDirector(director, times, page, per_page):
 
     # 查找与director合作次数超过time的actor
     director_cooperate_actor = db.session.query(
@@ -161,13 +99,11 @@ def __getActorCooperateWithDirector(director, times, page, per_page):
         ) \
         .having(sqlalchemy.func.count(director_cooperate_actor.c.movie_id) >= times)
     
-    start_time = time.time()
-    actors = actors_query.paginate(page=page, per_page=per_page).items
-    consuming_time = time.time() - start_time
+    pages = actors_query.count() // per_page + 1
 
-    return consuming_time, list(map(lambda x: {"name": x[0], "movies": x[1].split(','), "times": x[2]}, actors))
+    return pages
 
-def __getActorCooperateWithActor(actor, times, page, per_page):
+def __getPagesOfActorCooperateWithActor(actor, times, page, per_page):
 
     # 查找与actor合作次数超过time的actor
     left_actors: Actor = sqlalchemy.orm.aliased(Actor)
@@ -194,46 +130,23 @@ def __getActorCooperateWithActor(actor, times, page, per_page):
     left_query = db.session.query(
             # actor_cooperate_actor.c.left_actor_id.label("with_actor_id"),
             actor_cooperate_actor.c.left_actor_name.label("with_actor_name"),
-            
-            actor_cooperate_actor.c.title.label("title"),
         ) \
         .filter(actor_cooperate_actor.c.right_actor_name.like("%{}%".format(actor)))
     right_query = db.session.query(
             # actor_cooperate_actor.c.right_actor_id.label("with_actor_id"),
             actor_cooperate_actor.c.right_actor_name.label("with_actor_name"),
-            # actor_cooperate_actor.c.title.label("title"),
-            actor_cooperate_actor.c.title.label("title"),
         ) \
         .filter(actor_cooperate_actor.c.left_actor_name.like("%{}%".format(actor)))
     final_query = left_query.union_all(right_query)
+    
+    actors_all = final_query.all() # 查询
+    delete_bracket = map(lambda x: x[0], actors_all) # 删除括号，取第一个
+    count_occurrence_time = dict(Counter(delete_bracket)) # 计算出现次数，转换为字典
+    time_filted = list(filter(lambda x: x[1] >= times, count_occurrence_time.items())) # 过滤
+    print(time_filted)
+    return len(list(time_filted)) // per_page + 1
 
-    start_time = time.time()
-    print("page={0}, per_page={1}".format(page, per_page))
-    actors_all = final_query.all()
-    consuming_time = time.time() - start_time
-    print(actors_all)
-    # actors_all = final_query.all() # 查询
-    delete_bracket = list(map(lambda x: (x[0],x[1]), actors_all)) # 删除括号，取第一个
-    result_dict = {}
-    for bracket in delete_bracket:
-        name, movie = bracket[0], bracket[1]
-        if name in result_dict.keys():
-            result_dict[name].append(movie)
-        else:
-            result_dict[name] = [movie]
-    result = []
-    for key, value in result_dict.items():
-        if len(value) >= times:
-            result.append({
-                "name": key,
-                "movies": value,
-                "times": len(value)
-            })
-    return consuming_time, result[(page - 1) * per_page: page * per_page]
-
-    # return consuming_time, list(map(lambda x: [x[0], x[1]], filter(lambda x: x[1] >= times, dict(Counter(map(lambda x: [x[0], x[1]], actors_all))).items())))
-
-def __getDirectorCooperateWithActor(actor, times, page, per_page):
+def __getPagesOfDirectorCooperateWithActor(actor, times, page, per_page):
 
     # 查找与actor合作次数超过time的director
     director_cooperate_actor = db.session.query(
@@ -268,8 +181,6 @@ def __getDirectorCooperateWithActor(actor, times, page, per_page):
         ) \
         .having(sqlalchemy.func.count(director_cooperate_actor.c.movie_id) >= times)
 
-    start_time = time.time()
-    directors = directors_query.paginate(page=page, per_page=per_page).items
-    consuming_time = time.time() - start_time
+    pages = directors_query.count() // per_page + 1
 
-    return consuming_time, list(map(lambda x: {"name": x[0], "movies": x[1].split(','), "times": x[2]}, directors))
+    return pages
