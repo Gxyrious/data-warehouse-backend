@@ -18,6 +18,8 @@ def neo4j_comprehensive_movie():
     b = conditions.get('target')
     times = conditions.get('times')
     inname = conditions.get('name')
+    page = conditions.get('page')
+    per_page =  conditions.get('per_page')
     result = {'data': {}}
     # calculate time
     start_time = time.time()
@@ -32,7 +34,10 @@ def neo4j_comprehensive_movie():
             x = relationship[i].get("title").split(',')
             resulted.append({"name": relationship[i].get("name"), "title": x, "times": relationship[i].get("times")})
         result.update({"count": len(relationship)})
-        result.update({'data': resulted})
+        end = page * per_page
+        if end > len(resulted):
+            end = len(resulted)
+        result.update({'data': resulted[(page - 1) * per_page:end]})
         # ..
     elif a == 'director' and b == 'actor':
         node_matcher = NodeMatcher(graph)
@@ -45,7 +50,10 @@ def neo4j_comprehensive_movie():
             x = relationship[i].get("title").split(',')
             resulted.append({"name": relationship[i].get("name"), "title": x, "times": relationship[i].get("times")})
         result.update({"count": len(relationship)})
-        result.update({'data': resulted})
+        end = page * per_page
+        if end > len(resulted):
+            end = len(resulted)
+        result.update({'data': resulted[(page - 1) * per_page:end]})
         # ..
     elif a == 'actor' and b == 'director':
         node_matcher = NodeMatcher(graph)
@@ -58,7 +66,10 @@ def neo4j_comprehensive_movie():
             x = relationship[i].get("title").split(',')
             resulted.append({"name": relationship[i].get("name"), "title": x, "times": relationship[i].get("times")})
         result.update({"count": len(relationship)})
-        result.update({'data': resulted})
+        end = page * per_page
+        if end > len(resulted):
+            end = len(resulted)
+        result.update({'data': resulted[(page - 1) * per_page:end]})
 
         # ..
     end_time = time.time()
