@@ -1,7 +1,6 @@
 from flask import request, Blueprint, jsonify
 from mysql_.model import *
 import time, sqlalchemy
-from collections import Counter
 
 comprehensive = Blueprint("mysql_comprehensive", __name__)
 
@@ -9,7 +8,12 @@ comprehensive = Blueprint("mysql_comprehensive", __name__)
 def comprehensiveMovieQuery():
     consuming_time = 0
     data: dict = request.get_json()
-    columns = data.pop("columns")
+    print(data)
+    data = {k: v for k, v in data.items() if v is not None and v != ''}
+    try:
+        columns = data.pop("columns")
+    except Exception:
+        raise KeyError("Columns is not included!")
     page, per_page = 1, 10
     try:
         page, per_page = int(data.pop("page")), int(data.pop("per_page"))
@@ -119,7 +123,7 @@ def comprehensiveRelationQuery():
     elif source == "actor" and target == "director":
         consuming_time, result = __getDirectorCooperateWithActor(name, times, page, per_page)
     else:
-        print(source, target)
+        raise KeyError("Only actor&director is available!")
     
     return jsonify({
         "count": len(result),
@@ -226,7 +230,7 @@ def __getActorCooperateWithActor(actor, times, page, per_page):
         if len(value) >= times:
             result.append({
                 "name": key,
-                "movies": value,
+                "title": value,
                 "times": len(value)
             })
     return consuming_time, result[(page - 1) * per_page: page * per_page]
