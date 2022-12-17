@@ -13,10 +13,11 @@ def spark_comprehensive_movie():
 
     # get data from post
     data: dict = request.get_json()
-    data = {k: v for k, v in data.items() if v is not None}
+    data = {k: v for k, v in data.items() if v is not None and v != ''}
 
     print(data)
-    columns = ["score", "edition", "date", "genre_name", "title","asin","actors","directors"]
+    columns = ["score", "edition", "date", "genre_name",
+               "title", "asin", "actors", "directors"]
     columns = data.pop('columns')
 
     page, per_page = 1, 10
@@ -62,29 +63,29 @@ def spark_comprehensive_movie():
             start_time = time.time()
             format_list = [row['movie_id'] for row in t_movie_format.filter(
                 t_movie_format['format_name'].like("%{}%".format(value))).collect()]
+            consuming_time += time.time() - start_time
             if len(filter_movie_id_list) != 0:
                 filter_movie_id_list.intersection(set(format_list))
             else:
                 filter_movie_id_list = set(format_list)
-            consuming_time += time.time() - start_time
         elif key == "actor":
             start_time = time.time()
             actor_list = [row['movie_id'] for row in t_movie_actor.filter(
                 t_movie_actor['actor_name'].like("%{}%".format(value))).collect()]
+            consuming_time += time.time() - start_time
             if len(filter_movie_id_list) != 0:
                 filter_movie_id_list.intersection(set(actor_list))
             else:
                 filter_movie_id_list = set(actor_list)
-            consuming_time += time.time() - start_time
         elif key == "director":
             start_time = time.time()
             director_list = set([row['movie_id'] for row in t_movie_director.filter(
                 t_movie_director['director_name'].like("%{}%".format(value))).collect()])
+            consuming_time += time.time() - start_time
             if len(filter_movie_id_list) != 0:
                 filter_movie_id_list.intersection(set(director_list))
             else:
                 filter_movie_id_list = set(director_list)
-            consuming_time += time.time() - start_time
         elif key == "min_score":
             filters.append(t_movie_date_genre["score"] >= value)
         elif key == "max_score":
@@ -107,9 +108,9 @@ def spark_comprehensive_movie():
         result_of_simple_columns.show()
         if result_of_simple_columns.count() == 0:
             return jsonify({
-                "count": count,
+                "count": 0,
                 "consuming_time": consuming_time,
-                "data": result,
+                "data": [],
             })
 
     result_of_simple_columns = result_of_simple_columns.select(simple_columns)
@@ -129,7 +130,7 @@ def spark_comprehensive_movie():
 
     if r.shape[0] == 0:
         return jsonify({
-            "count": count,
+            "count": 0,
             "consuming_time": consuming_time,
             "data": [],
         })
@@ -259,7 +260,7 @@ def __getActorCooperateWithDirector(director, times, page, per_page):
     if end > len(result):
         end = len(result)
 
-    return consuming_time, result[(page-1)*per_page:end],len(result)
+    return consuming_time, result[(page-1)*per_page:end], len(result)
 
 
 def __getActorCooperateWithActor(actor, times, page, per_page):
@@ -314,7 +315,7 @@ def __getActorCooperateWithActor(actor, times, page, per_page):
     if end > len(result):
         end = len(result)
 
-    return consuming_time, result[(page-1)*per_page:end],len(result)
+    return consuming_time, result[(page-1)*per_page:end], len(result)
 
 
 def __getDirectorCooperateWithActor(actor, times, page, per_page):
@@ -348,4 +349,4 @@ def __getDirectorCooperateWithActor(actor, times, page, per_page):
     if end > len(result):
         end = len(result)
 
-    return consuming_time, result[(page-1)*per_page:end],len(result)
+    return consuming_time, result[(page-1)*per_page:end], len(result)
