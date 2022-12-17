@@ -11,7 +11,7 @@ class Act(db.Model):
 
     movie_id = db.Column(db.ForeignKey('Movie.movie_id'), primary_key=True, nullable=False)
     actor_id = db.Column(db.ForeignKey('Actor.actor_id'), primary_key=True, nullable=False, index=True)
-    movie_title = db.Column(db.String(256), nullable=False)
+    movie_title = db.Column(db.String(256), nullable=False, index=True)
 
     actor = db.relationship('Actor', primaryjoin='Act.actor_id == Actor.actor_id', backref='acts')
     movie = db.relationship('Movie', primaryjoin='Act.movie_id == Movie.movie_id', backref='acts')
@@ -22,7 +22,7 @@ class Actor(db.Model):
     __tablename__ = 'Actor'
 
     actor_id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(256))
+    name = db.Column(db.String(256), index=True)
 
 
 
@@ -38,8 +38,8 @@ class Asin(db.Model):
 
 t_Cooperation = db.Table(
     'Cooperation',
-    db.Column('left_person_id', db.Integer, nullable=False),
-    db.Column('right_person_id', db.Integer, nullable=False),
+    db.Column('left_person_id', db.Integer, nullable=False, index=True),
+    db.Column('right_person_id', db.Integer, nullable=False, index=True),
     db.Column('movie_id', db.Integer, nullable=False),
     db.Column('type', db.Integer)
 )
@@ -62,7 +62,7 @@ class Director(db.Model):
     __tablename__ = 'Director'
 
     director_id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(256))
+    name = db.Column(db.String(256), index=True)
 
 
 
@@ -82,7 +82,7 @@ class Genre(db.Model):
     __tablename__ = 'Genre'
 
     genre_id = db.Column(db.Integer, primary_key=True)
-    genre_name = db.Column(db.String(64), nullable=False)
+    genre_name = db.Column(db.String(64), nullable=False, index=True)
     movie_id = db.Column(db.ForeignKey('Movie.movie_id'), nullable=False, index=True)
     movie_title = db.Column(db.String(256), nullable=False)
 
@@ -94,14 +94,17 @@ class Movie(db.Model):
     __tablename__ = 'Movie'
 
     movie_id = db.Column(db.Integer, primary_key=True)
-    title = db.Column(db.String(256))
-    score = db.Column(db.Float, nullable=False)
+    title = db.Column(db.String(256), index=True)
+    score = db.Column(db.Float, nullable=False, index=True)
     edition = db.Column(db.Integer, nullable=False)
 
 
 
 class ReleaseDate(db.Model):
     __tablename__ = 'ReleaseDate'
+    __table_args__ = (
+        db.Index('ReleaseDate_year_month_day_weekday_season_index', 'year', 'month', 'day', 'weekday', 'season'),
+    )
 
     time_id = db.Column(db.Integer, primary_key=True)
     movie_id = db.Column(db.ForeignKey('Movie.movie_id'), nullable=False, index=True)
