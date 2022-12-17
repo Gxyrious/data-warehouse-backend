@@ -9,11 +9,13 @@ count = Blueprint("mysql_comprehensive_count", __name__)
 def comprehensiveMoviePages():
     # 只需要传筛选条件和页码，不需要传columns
     data: dict = request.get_json()
+    data = {k: v for k, v in data.items() if v is not None and v != ''}
     page, per_page = 1, 10
     try:
         page, per_page = int(data.pop("page")), int(data.pop("per_page"))
     except KeyError as e:
-        print(e)
+        pass
+        # print(e)
     # 获取筛选条件
     filters = []
     for key, value in data.items():
@@ -45,27 +47,30 @@ def comprehensiveMoviePages():
 @count.route('/relation', methods=['POST'])
 def comprehensiveRelationPages():
     data: dict = request.get_json()
+    data = {k: v for k, v in data.items() if v is not None and v != ''}
     name, times = data["name"], int(data["times"])
     source, target = data["source"], data["target"]
     page, per_page = 1, 10
     try:
         page, per_page = int(data.pop("page")), int(data.pop("per_page"))
     except KeyError as e:
-        print(e)
+        pass
+        # print(e)
     if source == "director" and target == "actor":
-        pages = __getPagesOfActorCooperateWithDirector(name, times, page, per_page)
+        amount = __getPagesOfActorCooperateWithDirector(name, times)
     elif source == "actor" and target == "actor":
-        pages = __getPagesOfActorCooperateWithActor(name, times, page, per_page)
+        amount = __getPagesOfActorCooperateWithActor(name, times)
     elif source == "actor" and target == "director":
-        pages = __getPagesOfDirectorCooperateWithActor(name, times, page, per_page)
+        amount = __getPagesOfDirectorCooperateWithActor(name, times)
     else:
-        print(source, target)
-    
+        # print(source, target)
+        raise KeyError("(source, target) should be included in \{(actor, director), (director, actor), (actor, actor)\}")
+    pages = 0 if amount == 0 else ((amount - 1) // per_page + 1)
     return jsonify({
         "pages": pages
     })
 
-def __getPagesOfActorCooperateWithDirector(director, times, page, per_page):
+def __getPagesOfActorCooperateWithDirector(director, times):
 
     # 查找与director合作次数超过time的actor
     director_cooperate_actor = db.session.query(
@@ -98,12 +103,10 @@ def __getPagesOfActorCooperateWithDirector(director, times, page, per_page):
             director_cooperate_actor.c.actor_id
         ) \
         .having(sqlalchemy.func.count(director_cooperate_actor.c.movie_id) >= times)
-    
-    pages = actors_query.count() // per_page + 1
 
-    return pages
+    return actors_query.count()
 
-def __getPagesOfActorCooperateWithActor(actor, times, page, per_page):
+def __getPagesOfActorCooperateWithActor(actor, times):
 
     # 查找与actor合作次数超过time的actor
     left_actors: Actor = sqlalchemy.orm.aliased(Actor)
@@ -143,10 +146,10 @@ def __getPagesOfActorCooperateWithActor(actor, times, page, per_page):
     delete_bracket = map(lambda x: x[0], actors_all) # 删除括号，取第一个
     count_occurrence_time = dict(Counter(delete_bracket)) # 计算出现次数，转换为字典
     time_filted = list(filter(lambda x: x[1] >= times, count_occurrence_time.items())) # 过滤
-    print(time_filted)
-    return len(list(time_filted)) // per_page + 1
+    # print(time_filted)
+    return len(time_filted)
 
-def __getPagesOfDirectorCooperateWithActor(actor, times, page, per_page):
+def __getPagesOfDirectorCooperateWithActor(actor, times):
 
     # 查找与actor合作次数超过time的director
     director_cooperate_actor = db.session.query(
@@ -181,6 +184,4 @@ def __getPagesOfDirectorCooperateWithActor(actor, times, page, per_page):
         ) \
         .having(sqlalchemy.func.count(director_cooperate_actor.c.movie_id) >= times)
 
-    pages = directors_query.count() // per_page + 1
-
-    return pages
+    return directors_query.count()

@@ -1,5 +1,6 @@
 from flask import request, Blueprint, jsonify
 from mysql_.model import *
+from sqlalchemy import func
 
 suggest = Blueprint("suggest", __name__)
 
@@ -31,6 +32,17 @@ def getDirectorSuggestion():
     director, amount = data["director"], data["amount"]
     suggestions = db.session.query(Director.name) \
         .filter(Director.name.like("{}%".format(director))) \
+        .limit(amount) \
+        .all()
+    result = list(map(lambda x: x[0], suggestions))
+    return jsonify({"suggestions": result})
+
+@suggest.route("/genre", methods=['GET'])
+def getGenreSuggestion():
+    data = request.args
+    genre, amount = data["genre"], data["amount"]
+    suggestions = db.session.query(func.distinct(Genre.genre_name)) \
+        .filter(Genre.genre_name.like("{}%".format(genre))) \
         .limit(amount) \
         .all()
     result = list(map(lambda x: x[0], suggestions))

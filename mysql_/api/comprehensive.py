@@ -1,7 +1,6 @@
 from flask import request, Blueprint, jsonify
 from mysql_.model import *
 import time, sqlalchemy
-from collections import Counter
 
 comprehensive = Blueprint("mysql_comprehensive", __name__)
 
@@ -9,12 +8,18 @@ comprehensive = Blueprint("mysql_comprehensive", __name__)
 def comprehensiveMovieQuery():
     consuming_time = 0
     data: dict = request.get_json()
-    columns = data.pop("columns")
+    # print(data)
+    data = {k: v for k, v in data.items() if v is not None and v != ''}
+    try:
+        columns = data.pop("columns")
+    except Exception:
+        raise KeyError("Columns is not included!")
     page, per_page = 1, 10
     try:
         page, per_page = int(data.pop("page")), int(data.pop("per_page"))
     except KeyError as e:
-        print(e)
+        pass
+        # print(e)
 
     # 获取简单的字段，直接查视图
     # ["score", "edition", "date", "genre_name", "title", "actors", "directors", "format", "asin", ]
@@ -111,7 +116,8 @@ def comprehensiveRelationQuery():
     try:
         page, per_page = int(data.pop("page")), int(data.pop("per_page"))
     except KeyError as e:
-        print(e)
+        pass
+        # print(e)
     if source == "director" and target == "actor":
         consuming_time, result = __getActorCooperateWithDirector(name, times, page, per_page)
     elif source == "actor" and target == "actor":
@@ -119,7 +125,7 @@ def comprehensiveRelationQuery():
     elif source == "actor" and target == "director":
         consuming_time, result = __getDirectorCooperateWithActor(name, times, page, per_page)
     else:
-        print(source, target)
+        raise KeyError("Only actor&director is available!")
     
     return jsonify({
         "count": len(result),
@@ -165,7 +171,7 @@ def __getActorCooperateWithDirector(director, times, page, per_page):
     actors = actors_query.paginate(page=page, per_page=per_page).items
     consuming_time = time.time() - start_time
 
-    return consuming_time, list(map(lambda x: {"name": x[0], "movies": x[1].split(','), "times": x[2]}, actors))
+    return consuming_time, list(map(lambda x: {"name": x[0], "title": x[1].split(','), "times": x[2]}, actors))
 
 def __getActorCooperateWithActor(actor, times, page, per_page):
 
@@ -208,10 +214,10 @@ def __getActorCooperateWithActor(actor, times, page, per_page):
     final_query = left_query.union_all(right_query)
 
     start_time = time.time()
-    print("page={0}, per_page={1}".format(page, per_page))
+    # print("page={0}, per_page={1}".format(page, per_page))
     actors_all = final_query.all()
     consuming_time = time.time() - start_time
-    print(actors_all)
+    # print(actors_all)
     # actors_all = final_query.all() # 查询
     delete_bracket = list(map(lambda x: (x[0],x[1]), actors_all)) # 删除括号，取第一个
     result_dict = {}
@@ -226,7 +232,7 @@ def __getActorCooperateWithActor(actor, times, page, per_page):
         if len(value) >= times:
             result.append({
                 "name": key,
-                "movies": value,
+                "title": value,
                 "times": len(value)
             })
     return consuming_time, result[(page - 1) * per_page: page * per_page]
@@ -272,4 +278,4 @@ def __getDirectorCooperateWithActor(actor, times, page, per_page):
     directors = directors_query.paginate(page=page, per_page=per_page).items
     consuming_time = time.time() - start_time
 
-    return consuming_time, list(map(lambda x: {"name": x[0], "movies": x[1].split(','), "times": x[2]}, directors))
+    return consuming_time, list(map(lambda x: {"name": x[0], "title": x[1].split(','), "times": x[2]}, directors))

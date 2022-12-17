@@ -28,10 +28,9 @@ def neo4j_comprehensive_movie():
         node_matcher = NodeMatcher(graph)
         relationship_matcher = RelationshipMatcher(graph)
         node1 = node_matcher.match('actor').where(name=inname).first()
-        filwhere = "(_.name='" + str(inname) + "' OR " + "_.name1='" + str(inname) + "') AND " + "_.times>=" + str(
-            times)
+        filwhere = "(_.name='" + str(inname) + "' OR " + "_.name1='" + str(inname) + "') AND " + "_.times>=" + str(times)
         relationship = list(relationship_matcher.match(None, r_type='actope').where(filwhere).all())
-        print(relationship)
+        # print(relationship)
         for i in range(len(relationship)):
             x = relationship[i].get("title").split(',')
             if relationship[i].get("name") != inname:
@@ -55,7 +54,7 @@ def neo4j_comprehensive_movie():
         node1 = node_matcher.match('director').where(name=inname).first()
         filnum = "_.times>=" + str(times)
         relationship = list(relationship_matcher.match(None, r_type='directope', dname=inname).where(filnum).all())
-        print(relationship)
+        # print(relationship)
         for i in range(len(relationship)):
             x = relationship[i].get("title").split(',')
             resulted.append({"name": relationship[i].get("aname"), "title": x, "times": relationship[i].get("times")})
@@ -74,7 +73,7 @@ def neo4j_comprehensive_movie():
         node1 = node_matcher.match('actor').where(name=inname).first()
         filnum = "_.times>=" + str(times)
         relationship = list(relationship_matcher.match(None, r_type='directope', aname=inname).where(filnum).all())
-        print(relationship)
+        # print(relationship)
         for i in range(len(relationship)):
             x = relationship[i].get("title").split(',')
             resulted.append({"name": relationship[i].get("dname"), "title": x, "times": relationship[i].get("times")})
