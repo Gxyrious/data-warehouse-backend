@@ -107,6 +107,7 @@ def spark_comprehensive_movie():
         consuming_time += time.time() - start_time
         result_of_simple_columns.show()
         if result_of_simple_columns.count() == 0:
+            # session.stop()
             return jsonify({
                 "count": 0,
                 "consuming_time": consuming_time,
@@ -129,6 +130,7 @@ def spark_comprehensive_movie():
     print(r)
 
     if r.shape[0] == 0:
+        # session.stop()
         return jsonify({
             "count": 0,
             "consuming_time": consuming_time,
@@ -184,6 +186,7 @@ def spark_comprehensive_movie():
 
     print(result)
 
+    # session.stop()
     return jsonify({
         "count": count,
         "consuming_time": consuming_time,
@@ -260,6 +263,8 @@ def __getActorCooperateWithDirector(director, times, page, per_page):
     if end > len(result):
         end = len(result)
 
+    # session.stop()
+
     return consuming_time, result[(page-1)*per_page:end], len(result)
 
 
@@ -315,6 +320,8 @@ def __getActorCooperateWithActor(actor, times, page, per_page):
     if end > len(result):
         end = len(result)
 
+    # session.stop()
+
     return consuming_time, result[(page-1)*per_page:end], len(result)
 
 
@@ -348,5 +355,7 @@ def __getDirectorCooperateWithActor(actor, times, page, per_page):
     end = page * per_page
     if end > len(result):
         end = len(result)
+
+    # session.stop()
 
     return consuming_time, result[(page-1)*per_page:end], len(result)
