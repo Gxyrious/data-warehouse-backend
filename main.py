@@ -2,6 +2,7 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 
+
 # 引入mysql
 from mysql_.model import *
 from mysql_.api.bytime import bytime as mysql_bytime
@@ -22,8 +23,13 @@ from neo4j_.api.comprehensive import comprehensive as neo4j_comprehensive
 # 搜索建议
 from mysql_.api.suggest import suggest
 
+# 引入spark
+from spark_.api.comprehensive import comprehensive as spark_comprehensive
+from spark_.utils import get_spark_session
+
+
 app = Flask(__name__)
-CORS(app, resources=r'/*')	# 注册CORS, "/*" 允许访问所有api
+CORS(app, resources=r'/*')  # 注册CORS, "/*" 允许访问所有api
 
 # 注册mysql相关api
 app.register_blueprint(mysql_bytime, url_prefix='/mysql/bytime')
@@ -40,6 +46,9 @@ app.register_blueprint(mysql_count, url_prefix='/mysql/count')
 app.register_blueprint(neo4j_bytime, url_prefix='/neo4j/bytime')
 app.register_blueprint(neo4j_bytitle, url_prefix='/neo4j/bytitle')
 app.register_blueprint(neo4j_comprehensive, url_prefix='/neo4j/comprehensive')
+
+# 注册spark相关api
+app.register_blueprint(spark_comprehensive, url_prefix='/spark/comprehensive')
 
 # 注册搜索建议相关api
 app.register_blueprint(suggest, url_prefix='/mysql/suggest')
@@ -67,12 +76,12 @@ def testget():
     return jsonify(data)
 
 if __name__ == '__main__':
+    get_spark_session()
     with app.app_context():
-        db.create_all()
         app.run(host='0.0.0.0', debug=True)
 
 
-### 后台运行
+# 后台运行
 # nohup python main.py &
-### 寻找pid杀死
+# 寻找pid杀死
 # ps -aux|grep -v grep |grep main.py |awk '{print $2}'| xargs kill -9
